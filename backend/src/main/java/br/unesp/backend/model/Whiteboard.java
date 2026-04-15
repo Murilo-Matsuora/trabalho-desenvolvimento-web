@@ -3,11 +3,15 @@ package br.unesp.backend.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 
 @Entity
@@ -21,23 +25,28 @@ public class Whiteboard {
     private double panX;
     private double panY;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @ManyToOne
+    @JoinColumn(name = "usuario_id")
+    @JsonIgnore
+    private Usuario usuario;
+
+    @OneToMany(mappedBy = "whiteboard", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Anotacao> anotacoes = new ArrayList<>();
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "whiteboard", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Conexao> conexoes = new ArrayList<>();
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "whiteboard", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Desenho> desenhos = new ArrayList<>();
+
+    public Whiteboard() {
+    }
 
     public Whiteboard(String titulo, double zoom, double panX, double panY) {
         this.titulo = titulo;
         this.zoom = zoom;
         this.panX = panX;
         this.panY = panY;
-    }
-
-    public Whiteboard() {
     }
 
     public Long getId() {
@@ -80,6 +89,14 @@ public class Whiteboard {
         this.panY = panY;
     }
 
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+    }
+
     public List<Anotacao> getAnotacoes() {
         return anotacoes;
     }
@@ -103,8 +120,6 @@ public class Whiteboard {
     public void setDesenhos(List<Desenho> desenhos) {
         this.desenhos = desenhos;
     }
-
-    
 
     
 

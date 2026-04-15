@@ -20,7 +20,7 @@ public class Usuario{
     private String email;
     private String senha;
 
-    @OneToMany
+    @OneToMany(mappedBy = "usuario")
     private List<Whiteboard> whiteboards = new ArrayList<>();
     
     public Usuario(String email, String senha) {

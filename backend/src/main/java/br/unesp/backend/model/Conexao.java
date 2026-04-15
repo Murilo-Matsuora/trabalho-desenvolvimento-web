@@ -1,9 +1,12 @@
 package br.unesp.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
 @Entity
@@ -16,8 +19,18 @@ public class Conexao {
     private String traco;
     
     @ManyToOne
-    private Anotacao origem;
+    @JoinColumn(name = "whiteboard_id", nullable = false)
+    @JsonIgnore
+    private Whiteboard whiteboard;
+
     @ManyToOne
+    @JoinColumn(name = "origem_id")
+    @JsonIgnore
+    private Anotacao origem;
+
+    @ManyToOne
+    @JoinColumn(name = "destino_id")
+    @JsonIgnore
     private Anotacao destino;
     
     public Conexao(String tipo, String estilo, String traco, Anotacao origem, Anotacao destino) {
@@ -61,6 +74,14 @@ public class Conexao {
 
     public void setTraco(String traco) {
         this.traco = traco;
+    }
+    
+    public Whiteboard getWhiteboard() {
+        return whiteboard;
+    }
+
+    public void setWhiteboard(Whiteboard whiteboard) {
+        this.whiteboard = whiteboard;
     }
 
     public Anotacao getOrigem() {

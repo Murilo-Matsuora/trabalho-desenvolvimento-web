@@ -1,11 +1,15 @@
 package br.unesp.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -18,6 +22,11 @@ public abstract class Anotacao {
     private double y;
     private double altura;
     private double largura;
+
+    @ManyToOne
+    @JoinColumn(name = "whiteboard_id", nullable = false)
+    @JsonIgnore
+    private Whiteboard whiteboard;
 
     public Anotacao(double x, double y, double altura, double largura) {
         this.x = x;
@@ -67,6 +76,14 @@ public abstract class Anotacao {
 
     public void setLargura(double largura) {
         this.largura = largura;
+    }
+
+    public Whiteboard getWhiteboard() {
+        return whiteboard;
+    }
+
+    public void setWhiteboard(Whiteboard whiteboard) {
+        this.whiteboard = whiteboard;
     }
 
     
