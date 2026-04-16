@@ -1,0 +1,22 @@
+package br.unesp.backend.service; // Ajuste o pacote para o do trabalho
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import br.unesp.backend.repository.UsuarioRepository;
+
+@Service
+public class AuthorizationService implements UserDetailsService {
+
+    @Autowired
+    UsuarioRepository usuarioRepository;
+
+     @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return usuarioRepository.findByLogin(username);
+    }   
+ 
+}
