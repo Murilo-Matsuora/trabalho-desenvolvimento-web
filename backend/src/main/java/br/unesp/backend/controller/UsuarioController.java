@@ -1,6 +1,6 @@
 package br.unesp.backend.controller;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,54 +25,76 @@ public class UsuarioController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    @GetMapping(value="/{id}", produces="application/json")
-    public ResponseEntity<Usuario> getUser(
-        @PathVariable(value="id") Long id
-    )
-    {
-        Optional<Usuario> user1 = usuarioRepository.findById(id);
+    // GET /usuario/{id}
+    @GetMapping(value = "/{id}", produces = "application/json")
+    public ResponseEntity<Usuario> acharUsuario(@PathVariable(value = "id") Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().build();
+        }
 
-        return new ResponseEntity<Usuario>(user1.get(),HttpStatus.OK);
-    }
-    
-    @GetMapping(value="/", produces="application/json")
-    public ResponseEntity<ArrayList<Usuario>> init(
-    ){
-        Usuario user1 = new Usuario(
-            "user1@email.com",
-            "123"
-        );
+        Optional<Usuario> usuario = usuarioRepository.findById(id);
 
-        Usuario user2 = new Usuario(
-            "user2@email.com",
-            "456"
-        );        
-
-        ArrayList<Usuario> users = new ArrayList<Usuario>();
-        users.add(user1);
-        users.add(user2);
-        
-        return new ResponseEntity<ArrayList<Usuario>>(users, HttpStatus.OK);
+        return usuario
+                .map(u -> ResponseEntity.ok(u))
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping(value="/", produces = "application/json")
-    public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario){
+    // GET /usuario/all
+    @GetMapping(value = "/all", produces = "application/json")
+    public ResponseEntity<List<Usuario>> acharTodos() {
+        List<Usuario> usuarios = (List<Usuario>) usuarioRepository.findAll();
+
+        if (usuarios.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(usuarios);
+    }
+
+    // POST /usuario/
+    @PostMapping(value = "/", produces = "application/json")
+    public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario) {
+        if (usuario == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        usuario.setId(null);
+
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
-
-        return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);
+        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioSalvo);
     }
 
-    @PutMapping(value="/", produces = "application/json")
-    public ResponseEntity<Usuario> atualizar(@RequestBody Usuario usuario){
-        Usuario usuarioSalvo = usuarioRepository.save(usuario);
+    // PUT /usuario/{id}
+    @PutMapping(value = "/{id}", produces = "application/json")
+    public ResponseEntity<Usuario> atualizar(
+            @PathVariable Long id,
+            @RequestBody Usuario usuario) {
 
-        return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);
+        if (id == null || id <= 0 || usuario == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        if (!usuarioRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        usuario.setId(id);
+        Usuario usuarioAtualizado = usuarioRepository.save(usuario);
+        return ResponseEntity.ok(usuarioAtualizado);
     }
 
-    @DeleteMapping(value="/{id}", produces = "application/text")
-    public String deletar(@PathVariable("id") Long id){
+    // DELETE /usuario/{id}
+    @DeleteMapping(value = "/{id}", produces = "application/json")
+    public ResponseEntity<Void> deletar(@PathVariable("id") Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        if (!usuarioRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
         usuarioRepository.deleteById(id);
-
-        return "ok";
+        return ResponseEntity.noContent().build();
     }
 }
