@@ -1,11 +1,15 @@
 package br.unesp.backend.controller;
 
 import java.util.List;
+
+
 import java.util.Optional;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +28,54 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    // GET /usuario/ 
+    @GetMapping(value = "/", produces = "application/json")
+    public ResponseEntity<List<Usuario>> getAllUsers() {
+        List<Usuario> users = (List<Usuario>) usuarioRepository.findAll();
+        return new ResponseEntity<>(users, HttpStatus.OK);
+    }
+
+    // GET /usuario/{id} 
+    @GetMapping(value = "/{id}", produces = "application/json")
+    public ResponseEntity<Usuario> getUser(@PathVariable(value = "id") Long id) {
+        return usuarioRepository.findById(id)
+                .map(user -> new ResponseEntity<>(user, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    
+
+    // PUT /usuario/  Update
+    @PutMapping(value = "/", produces = "application/json")
+    public ResponseEntity<Usuario> atualizar(@RequestBody Usuario usuario) {
+        if (usuario.getSenha() != null && !usuario.getSenha().isEmpty()) {
+            usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
+        }
+        Usuario usuarioSalvo = usuarioRepository.save(usuario);
+        return new ResponseEntity<>(usuarioSalvo, HttpStatus.OK);
+    }
+
+    // DELETE /usuario/{id}
+    
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable("id") Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        if (!usuarioRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        usuarioRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
+
+    }
 
     // GET /usuario/{id}
     @GetMapping(value = "/{id}", produces = "application/json")
@@ -51,17 +103,14 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarios);
     }
 
-    // POST /usuario/
+    // POST /usuario/  Criptografia senha antes de salvar diretamente o user 
     @PostMapping(value = "/", produces = "application/json")
     public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario) {
-        if (usuario == null) {
-            return ResponseEntity.badRequest().build();
+        if (usuario.getSenha() != null && !usuario.getSenha().isEmpty()) {
+            usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
         }
-
-        usuario.setId(null);
-
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioSalvo);
+        return new ResponseEntity<>(usuarioSalvo, HttpStatus.CREATED);
     }
 
     // PUT /usuario/{id}
@@ -82,19 +131,7 @@ public class UsuarioController {
         Usuario usuarioAtualizado = usuarioRepository.save(usuario);
         return ResponseEntity.ok(usuarioAtualizado);
     }
+    
 
-    // DELETE /usuario/{id}
-    @DeleteMapping(value = "/{id}", produces = "application/json")
-    public ResponseEntity<Void> deletar(@PathVariable("id") Long id) {
-        if (id == null || id <= 0) {
-            return ResponseEntity.badRequest().build();
-        }
 
-        if (!usuarioRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        usuarioRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
-    }
 }

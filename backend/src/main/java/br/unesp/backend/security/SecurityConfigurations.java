@@ -33,6 +33,9 @@ public class SecurityConfigurations {
                         //.requestMatchers(HttpMethod.DELETE, "/camera/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
+
+
+                        .requestMatchers("/error").permitAll()
                         
                         // Bloqueia o endpoint "/camera" no verbo GET. Libera apenas para ADMINs
                         //.requestMatchers(HttpMethod.GET, "/camera/**").hasRole("ADMIN")
