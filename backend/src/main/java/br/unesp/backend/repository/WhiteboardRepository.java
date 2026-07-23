@@ -1,9 +1,9 @@
 package br.unesp.backend.repository;
 
-import org.springframework.data.repository.CrudRepository;
-
 import br.unesp.backend.model.Whiteboard;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface WhiteboardRepository extends CrudRepository<Whiteboard, Long> {
-
+@Repository
+public interface WhiteboardRepository extends JpaRepository<Whiteboard, Long> {
 }

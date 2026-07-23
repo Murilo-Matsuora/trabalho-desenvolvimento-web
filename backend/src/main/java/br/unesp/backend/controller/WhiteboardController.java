@@ -1,54 +1,63 @@
 package br.unesp.backend.controller;
 
-import java.util.ArrayList;
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import br.unesp.backend.model.Whiteboard;
-import br.unesp.backend.model.Usuario;
 import br.unesp.backend.repository.WhiteboardRepository;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
-@RequestMapping("/whiteboard")
+@RequestMapping("/api/whiteboards")
+@CrossOrigin(origins = "*")
 public class WhiteboardController {
 
-    @Autowired
-    private WhiteboardRepository whiteboardRepository;
+    private final WhiteboardRepository repository;
 
-    @GetMapping(value = "/{id}", produces = "application/json")
-    public ResponseEntity<Whiteboard> getById(@PathVariable(value = "id") Long id,
-            @AuthenticationPrincipal Usuario usuario) {
-        Optional<Whiteboard> wb = whiteboardRepository.findById(id);
-        return wb.filter(w -> w.getUsuario() != null && w.getUsuario().getId().equals(usuario.getId()))
-                .map(w -> new ResponseEntity<>(w, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    public WhiteboardController(WhiteboardRepository repository) {
+        this.repository = repository;
     }
 
-    @PostMapping(value = "/", produces = "application/json")
-    public ResponseEntity<Whiteboard> cadastrar(@RequestBody Whiteboard whiteboard,
-            @AuthenticationPrincipal Usuario usuario) {
-        whiteboard.setId(null);
-        whiteboard.setUsuario(usuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body(whiteboardRepository.save(whiteboard));
+    @GetMapping
+    public List<Whiteboard> getAll() {
+        return repository.findAll();
     }
 
-    @GetMapping(value = "/", produces = "application/json")
-    public ResponseEntity<ArrayList<Whiteboard>> init(@AuthenticationPrincipal Usuario usuario) {
-        Whiteboard w1 = new Whiteboard("Quadro 1", 1.0, 0.0, 0.0);
-        Whiteboard w2 = new Whiteboard("Quadro 2", 1.0, 10.0, 20.0);
-        ArrayList<Whiteboard> list = new ArrayList<>();
-        list.add(w1);
-        list.add(w2);
-        return new ResponseEntity<>(list, HttpStatus.OK);
+    @GetMapping("/{id}")
+    public ResponseEntity<Whiteboard> getById(@PathVariable Long id) {
+        return repository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public Whiteboard create(@RequestBody Whiteboard whiteboard) {
+        if (whiteboard.getTitle() == null || whiteboard.getTitle().isBlank()) {
+            whiteboard.setTitle("Novo Whiteboard");
+        }
+        if (whiteboard.getData() == null) {
+            whiteboard.setData("{\"elements\":[],\"arrows\":[],\"drawings\":[]}");
+        }
+        return repository.save(whiteboard);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Whiteboard> update(@PathVariable Long id, @RequestBody Whiteboard updated) {
+        return repository.findById(id)
+                .map(board -> {
+                    if (updated.getTitle() != null) board.setTitle(updated.getTitle());
+                    if (updated.getData() != null) board.setData(updated.getData());
+                    return ResponseEntity.ok(repository.save(board));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        if (repository.existsById(id)) {
+            repository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 }
