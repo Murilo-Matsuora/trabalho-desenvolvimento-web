@@ -70,10 +70,6 @@ public class Usuario implements UserDetails {
         this.nome = nome;
     }
 
-    public String getUsername() {
-        return this.username != null ? this.username : this.email;
-    }
-
     public void setUsername(String username) {
         this.username = username;
     }
@@ -126,6 +122,11 @@ public class Usuario implements UserDetails {
     @Override
     public String getPassword() {
         return this.senha;
+    }
+
+    @Override
+    public String getUsername() {
+        return this.username != null ? this.username : this.email;
     }
 
     @JsonIgnore

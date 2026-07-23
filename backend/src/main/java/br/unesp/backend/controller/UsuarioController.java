@@ -106,14 +106,11 @@ public class UsuarioController {
     // POST /usuario/  Criptografia senha antes de salvar diretamente o user 
     @PostMapping(value = "/", produces = "application/json")
     public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario) {
-        if (usuario == null) {
-            return ResponseEntity.badRequest().build();
+        if (usuario.getSenha() != null && !usuario.getSenha().isEmpty()) {
+            usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
         }
-
-        usuario.setId(null);
-
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
-        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioSalvo);
+        return new ResponseEntity<>(usuarioSalvo, HttpStatus.CREATED);
     }
 
     // PUT /usuario/{id}
