@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.unesp.backend.model.AuthenticationDTO;
 import br.unesp.backend.model.LoginResponseDTO;
+
 import br.unesp.backend.model.RegisterDTO;
 import br.unesp.backend.model.Usuario;
 import br.unesp.backend.repository.UsuarioRepository;
@@ -70,6 +71,7 @@ public class AuthenticationController {
 
         String encryptedPassword = passwordEncoder.encode(data.senha());
 
+
         Usuario newUser = new Usuario(
             data.nome(),
             data.username(),
@@ -77,6 +79,7 @@ public class AuthenticationController {
             encryptedPassword,
             data.role()
         );
+
 
         this.usuarioRepository.save(newUser);
 
