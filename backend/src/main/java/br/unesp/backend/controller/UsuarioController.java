@@ -1,19 +1,17 @@
 package br.unesp.backend.controller;
 
 import java.util.List;
-
-
-import java.util.Optional;
-
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,109 +27,91 @@ public class UsuarioController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // GET /usuario/ 
-    @GetMapping(value = "/", produces = "application/json")
-    public ResponseEntity<List<Usuario>> getAllUsers() {
-        List<Usuario> users = (List<Usuario>) usuarioRepository.findAll();
-        return new ResponseEntity<>(users, HttpStatus.OK);
-    }
-
-    // GET /usuario/{id} 
-    @GetMapping(value = "/{id}", produces = "application/json")
-    public ResponseEntity<Usuario> getUser(@PathVariable(value = "id") Long id) {
-        return usuarioRepository.findById(id)
-                .map(user -> new ResponseEntity<>(user, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
-    }
-
-    
-
-    // PUT /usuario/  Update
-    @PutMapping(value = "/", produces = "application/json")
-    public ResponseEntity<Usuario> atualizar(@RequestBody Usuario usuario) {
-        if (usuario.getSenha() != null && !usuario.getSenha().isEmpty()) {
-            usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
+    @GetMapping(value = "/me", produces = "application/json")
+    public ResponseEntity<Usuario> me(@AuthenticationPrincipal Usuario usuarioLogado) {
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        Usuario usuarioSalvo = usuarioRepository.save(usuario);
-        return new ResponseEntity<>(usuarioSalvo, HttpStatus.OK);
+        return ResponseEntity.ok(usuarioLogado);
     }
 
-    // DELETE /usuario/{id}
-    
-    @DeleteMapping(value = "/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable("id") Long id) {
-        if (id == null || id <= 0) {
-            return ResponseEntity.badRequest().build();
+    //PUT /usuario/me
+    // Atualiza o perfil do usuário logado mantendo a integridade dos dados e da senha.
+     
+    @PutMapping(value = "/me", produces = "application/json")
+    public ResponseEntity<Usuario> atualizarPerfil(
+            @RequestBody Usuario dados,
+            @AuthenticationPrincipal Usuario usuarioLogado) {
+
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        if (!usuarioRepository.existsById(id)) {
+        // Busca o usuário gerenciado diretamente do banco para evitar conflitos de JPA
+        Usuario usuarioBD = usuarioRepository.findById(usuarioLogado.getId()).orElse(null);
+        if (usuarioBD == null) {
             return ResponseEntity.notFound().build();
         }
 
-        usuarioRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
-
-    }
-
-    // GET /usuario/{id}
-    @GetMapping(value = "/{id}", produces = "application/json")
-    public ResponseEntity<Usuario> acharUsuario(@PathVariable(value = "id") Long id) {
-        if (id == null || id <= 0) {
-            return ResponseEntity.badRequest().build();
+        // Atualiza campos de texto apenas se forem informados
+        if (dados.getNome() != null && !dados.getNome().isBlank()) {
+            usuarioBD.setNome(dados.getNome());
+        }
+        if (dados.getUsername() != null && !dados.getUsername().isBlank()) {
+            usuarioBD.setUsername(dados.getUsername());
+        }
+        if (dados.getEmail() != null && !dados.getEmail().isBlank()) {
+            usuarioBD.setEmail(dados.getEmail());
         }
 
-        Optional<Usuario> usuario = usuarioRepository.findById(id);
+        // Criptografa e altera a senha apenas se uma nova for fornecida
+        if (dados.getSenha() != null && !dados.getSenha().isBlank()) {
+            usuarioBD.setSenha(passwordEncoder.encode(dados.getSenha()));
+        }
 
-        return usuario
-                .map(u -> ResponseEntity.ok(u))
-                .orElse(ResponseEntity.notFound().build());
+        Usuario usuarioAtualizado = usuarioRepository.save(usuarioBD);
+        return ResponseEntity.ok(usuarioAtualizado);
     }
 
-    // GET /usuario/all
+    @DeleteMapping(value = "/me")
+    public ResponseEntity<Void> deletarMinhaConta(@AuthenticationPrincipal Usuario usuarioLogado) {
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        if (!usuarioRepository.existsById(usuarioLogado.getId())) {
+            return ResponseEntity.notFound().build();
+        }
+
+        usuarioRepository.deleteById(usuarioLogado.getId());
+        return ResponseEntity.noContent().build();
+    }
+
+ 
     @GetMapping(value = "/all", produces = "application/json")
-    public ResponseEntity<List<Usuario>> acharTodos() {
-        List<Usuario> usuarios = (List<Usuario>) usuarioRepository.findAll();
+    public ResponseEntity<List<Usuario>> listarTodos() {
+        List<Usuario> usuarios = StreamSupport
+                .stream(usuarioRepository.findAll().spliterator(), false)
+                .collect(Collectors.toList());
 
         if (usuarios.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-
         return ResponseEntity.ok(usuarios);
     }
 
-    // POST /usuario/  Criptografia senha antes de salvar diretamente o user 
-    @PostMapping(value = "/", produces = "application/json")
-    public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario) {
-        if (usuario.getSenha() != null && !usuario.getSenha().isEmpty()) {
-            usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
-        }
-        Usuario usuarioSalvo = usuarioRepository.save(usuario);
-        return new ResponseEntity<>(usuarioSalvo, HttpStatus.CREATED);
-    }
 
-    // PUT /usuario/{id}
-    @PutMapping(value = "/{id}", produces = "application/json")
-    public ResponseEntity<Usuario> atualizar(
-            @PathVariable Long id,
-            @RequestBody Usuario usuario) {
-
-        if (id == null || id <= 0 || usuario == null) {
+    @GetMapping(value = "/{id}", produces = "application/json")
+    public ResponseEntity<Usuario> buscarPorId(@PathVariable("id") Long id) {
+        if (id == null || id <= 0) {
             return ResponseEntity.badRequest().build();
         }
 
-        if (!usuarioRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        usuario.setId(id);
-        Usuario usuarioAtualizado = usuarioRepository.save(usuario);
-        return ResponseEntity.ok(usuarioAtualizado);
+        return usuarioRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
-    
-
-
 }

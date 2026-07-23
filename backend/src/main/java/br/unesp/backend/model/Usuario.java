@@ -29,12 +29,13 @@ public class Usuario implements UserDetails {
     private String username;
     private String email;
 
-    @JsonIgnore
+    @JsonIgnore // Esconde a senha das respostas JSON
     private String senha;
 
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
+    @JsonIgnore // Evita loop infinito de serializacao JSON (recursao circular)
     @OneToMany(mappedBy = "usuario")
     private List<Whiteboard> whiteboards = new ArrayList<>();
 
@@ -44,6 +45,12 @@ public class Usuario implements UserDetails {
     public Usuario(String email, String senha) {
         this.email = email;
         this.senha = senha;
+    }
+
+    public Usuario(String email, String senha, UserRole role) {
+        this.email = email;
+        this.senha = senha;
+        this.role = role;
     }
 
     public Usuario(String nome, String username, String email, String senha, UserRole role) {
