@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.unesp.backend.model.Desenho;
 import br.unesp.backend.model.Ponto;
+import br.unesp.backend.model.Usuario;
 import br.unesp.backend.repository.DesenhoRepository;
 
 @RestController
@@ -24,14 +26,15 @@ public class DesenhoController {
     private DesenhoRepository desenhoRepository;
 
     @GetMapping(value = "/{id}", produces = "application/json")
-    public ResponseEntity<Desenho> getById(@PathVariable(value = "id") Long id) {
+    public ResponseEntity<Desenho> getById(@PathVariable(value = "id") Long id,
+            @AuthenticationPrincipal Usuario usuario) {
         Optional<Desenho> d = desenhoRepository.findById(id);
         return d.map(x -> new ResponseEntity<>(x, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @GetMapping(value = "/", produces = "application/json")
-    public ResponseEntity<ArrayList<Desenho>> init() {
+    public ResponseEntity<ArrayList<Desenho>> init(@AuthenticationPrincipal Usuario usuario) {
         List<Ponto> pts1 = new ArrayList<>();
         pts1.add(new Ponto(0.0, 0.0));
         pts1.add(new Ponto(10.0, 10.0));

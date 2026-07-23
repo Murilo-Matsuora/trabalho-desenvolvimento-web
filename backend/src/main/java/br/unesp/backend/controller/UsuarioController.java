@@ -1,15 +1,17 @@
 package br.unesp.backend.controller;
 
-import java.util.ArrayList;
-import java.util.Optional;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,54 +27,98 @@ public class UsuarioController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    @GetMapping(value="/{id}", produces="application/json")
-    public ResponseEntity<Usuario> getUser(
-        @PathVariable(value="id") Long id
-    )
-    {
-        Optional<Usuario> user1 = usuarioRepository.findById(id);
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-        return new ResponseEntity<Usuario>(user1.get(),HttpStatus.OK);
+    //GET /usuario/me
+     
+    @GetMapping(value = "/me", produces = "application/json")
+    public ResponseEntity<Usuario> me(@AuthenticationPrincipal Usuario usuarioLogado) {
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(usuarioLogado);
     }
+
+    // PUT /usuario/me
+     //Atualiza o perfil do usuário logado mantendo a integridade dos dados e da senha
+     
+    @PutMapping(value = "/me", produces = "application/json")
+    public ResponseEntity<Usuario> atualizarPerfil(
+            @RequestBody Usuario dados,
+            @AuthenticationPrincipal Usuario usuarioLogado) {
+
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        // Busca o usuário gerenciado diretamente do banco para evitar conflitos 
+        Usuario usuarioBD = usuarioRepository.findById(usuarioLogado.getId()).orElse(null);
+        if (usuarioBD == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Atualiza campos de texto apenas se forem informados
+        if (dados.getNome() != null && !dados.getNome().isBlank()) {
+            usuarioBD.setNome(dados.getNome());
+        }
+        if (dados.getUsername() != null && !dados.getUsername().isBlank()) {
+            usuarioBD.setUsername(dados.getUsername());
+        }
+        if (dados.getEmail() != null && !dados.getEmail().isBlank()) {
+            usuarioBD.setEmail(dados.getEmail());
+        }
+
+        // Criptografa e altera a senha apenas se uma nova for fornecida
+        if (dados.getSenha() != null && !dados.getSenha().isBlank()) {
+            usuarioBD.setSenha(passwordEncoder.encode(dados.getSenha()));
+        }
+
+        Usuario usuarioAtualizado = usuarioRepository.save(usuarioBD);
+        return ResponseEntity.ok(usuarioAtualizado);
+    }
+
+    //DELETE /usuario/me
     
-    @GetMapping(value="/", produces="application/json")
-    public ResponseEntity<ArrayList<Usuario>> init(
-    ){
-        Usuario user1 = new Usuario(
-            "user1@email.com",
-            "123"
-        );
+    @DeleteMapping(value = "/me")
+    public ResponseEntity<Void> deletarMinhaConta(@AuthenticationPrincipal Usuario usuarioLogado) {
+        if (usuarioLogado == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
-        Usuario user2 = new Usuario(
-            "user2@email.com",
-            "456"
-        );        
+        if (!usuarioRepository.existsById(usuarioLogado.getId())) {
+            return ResponseEntity.notFound().build();
+        }
 
-        ArrayList<Usuario> users = new ArrayList<Usuario>();
-        users.add(user1);
-        users.add(user2);
-        
-        return new ResponseEntity<ArrayList<Usuario>>(users, HttpStatus.OK);
+        usuarioRepository.deleteById(usuarioLogado.getId());
+        return ResponseEntity.noContent().build();
     }
 
-    @PostMapping(value="/", produces = "application/json")
-    public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario){
-        Usuario usuarioSalvo = usuarioRepository.save(usuario);
+  
+    //GET /usuario/all
 
-        return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);
+    @GetMapping(value = "/all", produces = "application/json")
+    public ResponseEntity<List<Usuario>> listarTodos() {
+        List<Usuario> usuarios = StreamSupport
+                .stream(usuarioRepository.findAll().spliterator(), false)
+                .collect(Collectors.toList());
+
+        if (usuarios.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(usuarios);
     }
 
-    @PutMapping(value="/", produces = "application/json")
-    public ResponseEntity<Usuario> atualizar(@RequestBody Usuario usuario){
-        Usuario usuarioSalvo = usuarioRepository.save(usuario);
+    //GET /usuario/{id}
+     
+    @GetMapping(value = "/{id}", produces = "application/json")
+    public ResponseEntity<Usuario> buscarPorId(@PathVariable("id") Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().build();
+        }
 
-        return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);
-    }
-
-    @DeleteMapping(value="/{id}", produces = "application/text")
-    public String deletar(@PathVariable("id") Long id){
-        usuarioRepository.deleteById(id);
-
-        return "ok";
+        return usuarioRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

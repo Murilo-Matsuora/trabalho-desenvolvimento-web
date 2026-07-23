@@ -1,4 +1,3 @@
-
 package br.unesp.backend.model;
 
 import java.util.ArrayList;
@@ -6,43 +5,54 @@ import java.util.Collection;
 import java.util.List;
 
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 
-
 @Entity
-public class Usuario implements UserDetails{
+public class Usuario implements UserDetails {
 
     @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private String nome;
+    private String username;
     private String email;
+
+    @JsonIgnore // Esconde a senha das respostas JSON
     private String senha;
+
+    @Enumerated(EnumType.STRING)
     private UserRole role;
 
-    public void setRole(UserRole role) {
-        this.role = role;
-    }
-
-    public UserRole getRole() {
-        return role;
-    }
-
+    @JsonIgnore 
     @OneToMany(mappedBy = "usuario")
     private List<Whiteboard> whiteboards = new ArrayList<>();
-    
+
+    public Usuario() {
+    }
+
     public Usuario(String email, String senha) {
         this.email = email;
         this.senha = senha;
-
     }
 
-    public Usuario() {
+    public Usuario(String nome, String username, String email, String senha, UserRole role) {
+        this.nome = nome;
+        this.username = username;
+        this.email = email;
+        this.senha = senha;
+        this.role = role;
     }
 
     public Long getId() {
@@ -51,6 +61,18 @@ public class Usuario implements UserDetails{
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getEmail() {
@@ -69,6 +91,14 @@ public class Usuario implements UserDetails{
         this.senha = senha;
     }
 
+    public UserRole getRole() {
+        return role;
+    }
+
+    public void setRole(UserRole role) {
+        this.role = role;
+    }
+
     public List<Whiteboard> getWhiteboards() {
         return whiteboards;
     }
@@ -77,51 +107,50 @@ public class Usuario implements UserDetails{
         this.whiteboards = whiteboards;
     }
 
+    @JsonIgnore
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // TODO Auto-generated method stub
-        return null;
+        if (this.role == UserRole.ADMIN) {
+            return List.of(
+                new SimpleGrantedAuthority("ROLE_ADMIN"),
+                new SimpleGrantedAuthority("ROLE_USER")
+            );
+        }
+        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
+    @JsonIgnore
     @Override
     public String getPassword() {
-        // TODO Auto-generated method stub
-        return null;
+        return this.senha;
     }
 
     @Override
     public String getUsername() {
-        // TODO Auto-generated method stub
-        return null;
+        return this.username != null ? this.username : this.email;
     }
 
+    @JsonIgnore
     @Override
     public boolean isAccountNonExpired() {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
+    @JsonIgnore
     @Override
     public boolean isAccountNonLocked() {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
+    @JsonIgnore
     @Override
     public boolean isCredentialsNonExpired() {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
+    @JsonIgnore
     @Override
     public boolean isEnabled() {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
-
-    
-
-    
-    
-    
-} 
+}
