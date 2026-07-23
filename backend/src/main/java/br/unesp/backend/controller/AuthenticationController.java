@@ -34,7 +34,7 @@ public class AuthenticationController {
     private TokenService tokenService;
 
     @PostMapping("/login")
-    public ResponseEntity login(@RequestBody @Valid AuthenticationDTO data){
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid AuthenticationDTO data){
      
         // É uma boa prática armazenarmos as senhas do usuário como HASH no banco de dados. 
         // Dessa maneira, caso haja um vazamento do BD, as senhas estarão criptografadas
@@ -54,7 +54,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity register(@RequestBody @Valid RegisterDTO data){
+    public ResponseEntity<Void> register(@RequestBody @Valid RegisterDTO data){
         // Primeiro verifica se já não existe outro usuário cadastrado com o mesmo email
         if(this.usuarioRepository.findByLogin(data.email()) != null) return ResponseEntity.badRequest().build();
 

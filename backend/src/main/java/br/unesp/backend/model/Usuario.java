@@ -47,6 +47,12 @@ public class Usuario implements UserDetails {
         this.senha = senha;
     }
 
+    public Usuario(String email, String senha, UserRole role) {
+        this.email = email;
+        this.senha = senha;
+        this.role = role;
+    }
+
     public Usuario(String nome, String username, String email, String senha, UserRole role) {
         this.nome = nome;
         this.username = username;
