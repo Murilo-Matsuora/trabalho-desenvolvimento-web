@@ -1,5 +1,8 @@
 package br.unesp.backend.model;
 
+import jakarta.persistence.Entity;
+
+@Entity
 public class Pessoa extends Usuario{
     private String nome;
     private String sobrenome;

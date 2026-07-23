@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.unesp.backend.model.AuthenticationDTO;
 import br.unesp.backend.model.LoginResponseDTO;
-import br.unesp.backend.model.Pessoa;
+// import br.unesp.backend.model.Pessoa;
 import br.unesp.backend.model.RegisterDTO;
 import br.unesp.backend.model.Usuario;
 import br.unesp.backend.repository.UsuarioRepository;
@@ -67,7 +67,8 @@ public class AuthenticationController {
         System.out.println(encryptedPassword);
         System.out.println(data.role());
 
-        Pessoa newUser = new Pessoa(data.email(), encryptedPassword, data.role(), "teste", "teste");
+        // Pessoa newUser = new Pessoa(data.email(), encryptedPassword, data.role(), "teste", "teste");
+        Usuario newUser = new Usuario(data.email(), encryptedPassword, data.role());
 
         this.usuarioRepository.save(newUser);
 

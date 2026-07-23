@@ -35,7 +35,7 @@ public class Usuario implements UserDetails {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-    @JsonIgnore 
+    @JsonIgnore // Evita loop infinito de serializacao JSON (recursao circular)
     @OneToMany(mappedBy = "usuario")
     private List<Whiteboard> whiteboards = new ArrayList<>();
 

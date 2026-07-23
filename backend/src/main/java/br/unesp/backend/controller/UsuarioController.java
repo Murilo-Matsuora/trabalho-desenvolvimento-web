@@ -30,8 +30,6 @@ public class UsuarioController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    //GET /usuario/me
-     
     @GetMapping(value = "/me", produces = "application/json")
     public ResponseEntity<Usuario> me(@AuthenticationPrincipal Usuario usuarioLogado) {
         if (usuarioLogado == null) {
@@ -40,8 +38,8 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioLogado);
     }
 
-    // PUT /usuario/me
-     //Atualiza o perfil do usuário logado mantendo a integridade dos dados e da senha
+    //PUT /usuario/me
+    // Atualiza o perfil do usuário logado mantendo a integridade dos dados e da senha.
      
     @PutMapping(value = "/me", produces = "application/json")
     public ResponseEntity<Usuario> atualizarPerfil(
@@ -52,7 +50,7 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // Busca o usuário gerenciado diretamente do banco para evitar conflitos 
+        // Busca o usuário gerenciado diretamente do banco para evitar conflitos de JPA
         Usuario usuarioBD = usuarioRepository.findById(usuarioLogado.getId()).orElse(null);
         if (usuarioBD == null) {
             return ResponseEntity.notFound().build();
@@ -78,8 +76,6 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioAtualizado);
     }
 
-    //DELETE /usuario/me
-    
     @DeleteMapping(value = "/me")
     public ResponseEntity<Void> deletarMinhaConta(@AuthenticationPrincipal Usuario usuarioLogado) {
         if (usuarioLogado == null) {
@@ -94,9 +90,7 @@ public class UsuarioController {
         return ResponseEntity.noContent().build();
     }
 
-  
-    //GET /usuario/all
-
+ 
     @GetMapping(value = "/all", produces = "application/json")
     public ResponseEntity<List<Usuario>> listarTodos() {
         List<Usuario> usuarios = StreamSupport
@@ -109,8 +103,7 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarios);
     }
 
-    //GET /usuario/{id}
-     
+
     @GetMapping(value = "/{id}", produces = "application/json")
     public ResponseEntity<Usuario> buscarPorId(@PathVariable("id") Long id) {
         if (id == null || id <= 0) {
