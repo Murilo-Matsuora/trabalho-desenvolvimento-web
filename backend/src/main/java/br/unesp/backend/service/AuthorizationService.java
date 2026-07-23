@@ -1,4 +1,4 @@
-package br.unesp.backend.service; // Ajuste o pacote para o do trabalho
+package br.unesp.backend.service; 
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;

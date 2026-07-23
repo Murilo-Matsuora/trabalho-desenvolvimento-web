@@ -1,11 +1,11 @@
 package br.unesp.backend.controller;
 
-import java.util.ArrayList;
-import java.util.Optional;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,54 +25,50 @@ public class UsuarioController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    @GetMapping(value="/{id}", produces="application/json")
-    public ResponseEntity<Usuario> getUser(
-        @PathVariable(value="id") Long id
-    )
-    {
-        Optional<Usuario> user1 = usuarioRepository.findById(id);
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-        return new ResponseEntity<Usuario>(user1.get(),HttpStatus.OK);
-    }
-    
-    @GetMapping(value="/", produces="application/json")
-    public ResponseEntity<ArrayList<Usuario>> init(
-    ){
-        Usuario user1 = new Usuario(
-            "user1@email.com",
-            "123"
-        );
-
-        Usuario user2 = new Usuario(
-            "user2@email.com",
-            "456"
-        );        
-
-        ArrayList<Usuario> users = new ArrayList<Usuario>();
-        users.add(user1);
-        users.add(user2);
-        
-        return new ResponseEntity<ArrayList<Usuario>>(users, HttpStatus.OK);
+    // GET /usuario/ 
+    @GetMapping(value = "/", produces = "application/json")
+    public ResponseEntity<List<Usuario>> getAllUsers() {
+        List<Usuario> users = (List<Usuario>) usuarioRepository.findAll();
+        return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
-    @PostMapping(value="/", produces = "application/json")
-    public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario){
+    // GET /usuario/{id} 
+    @GetMapping(value = "/{id}", produces = "application/json")
+    public ResponseEntity<Usuario> getUser(@PathVariable(value = "id") Long id) {
+        return usuarioRepository.findById(id)
+                .map(user -> new ResponseEntity<>(user, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    // POST /usuario/  Criptografia senha antes de salvar diretamente o user 
+    @PostMapping(value = "/", produces = "application/json")
+    public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario) {
+        if (usuario.getSenha() != null && !usuario.getSenha().isEmpty()) {
+            usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
+        }
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
-
-        return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);
+        return new ResponseEntity<>(usuarioSalvo, HttpStatus.CREATED);
     }
 
-    @PutMapping(value="/", produces = "application/json")
-    public ResponseEntity<Usuario> atualizar(@RequestBody Usuario usuario){
+    // PUT /usuario/  Update
+    public ResponseEntity<Usuario> atualizar(@RequestBody Usuario usuario) {
+        if (usuario.getSenha() != null && !usuario.getSenha().isEmpty()) {
+            usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
+        }
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
-
-        return new ResponseEntity<Usuario>(usuarioSalvo, HttpStatus.OK);
+        return new ResponseEntity<>(usuarioSalvo, HttpStatus.OK);
     }
 
-    @DeleteMapping(value="/{id}", produces = "application/text")
-    public String deletar(@PathVariable("id") Long id){
+    // DELETE /usuario/{id}
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable("id") Long id) {
+        if (!usuarioRepository.existsById(id)) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
         usuarioRepository.deleteById(id);
-
-        return "ok";
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

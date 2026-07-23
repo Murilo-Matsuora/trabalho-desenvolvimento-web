@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.unesp.backend.model.AuthenticationDTO;
 import br.unesp.backend.model.LoginResponseDTO;
-import br.unesp.backend.model.Pessoa;
 import br.unesp.backend.model.RegisterDTO;
 import br.unesp.backend.model.Usuario;
 import br.unesp.backend.repository.UsuarioRepository;
@@ -28,10 +28,15 @@ public class AuthenticationController {
 
     @Autowired
     private AuthenticationManager authenticationManager;
+
     @Autowired
     private UsuarioRepository usuarioRepository;
+
     @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody @Valid AuthenticationDTO data){
@@ -41,14 +46,13 @@ public class AuthenticationController {
         // e não poderão ser diretamente acessadas. 
         var usernamePassword = new UsernamePasswordAuthenticationToken(data.email(), data.senha());
 
-        try{
+        try {
             var auth = this.authenticationManager.authenticate(usernamePassword);
-            var token = tokenService.generateToken((Usuario)auth.getPrincipal());
+            var token = tokenService.generateToken((Usuario) auth.getPrincipal());
 
             return ResponseEntity.ok(new LoginResponseDTO(token));
-        }catch(Exception e){
-            System.out.println("Erro:  ");
-            System.out.println(e);
+        } catch (Exception e) {
+            System.out.println("Erro ao realizar login: " + e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -56,18 +60,23 @@ public class AuthenticationController {
     @PostMapping("/register")
     public ResponseEntity register(@RequestBody @Valid RegisterDTO data){
         // Primeiro verifica se já não existe outro usuário cadastrado com o mesmo email
-        if(this.usuarioRepository.findByLogin(data.email()) != null) return ResponseEntity.badRequest().build();
+        if (this.usuarioRepository.findByLogin(data.email()) != null) {
+            return ResponseEntity.badRequest().build();
+        }
 
         // Caso não exista, vamos encriptar a senha para salvar no BD. A senha bruta do usuário 
         // NÃO DEVE SER INSERIDA NO BD POR MEDIDAS DE SEGURANÇA.
 
 
-        String encryptedPassword = new BCryptPasswordEncoder().encode(data.senha());
-        System.out.println(data.email());
-        System.out.println(encryptedPassword);
-        System.out.println(data.role());
+        String encryptedPassword = passwordEncoder.encode(data.senha());
 
-        Pessoa newUser = new Pessoa(data.email(), encryptedPassword, data.role(), "teste", "teste");
+        Usuario newUser = new Usuario(
+            data.nome(),
+            data.username(),
+            data.email(),
+            encryptedPassword,
+            data.role()
+        );
 
         this.usuarioRepository.save(newUser);
 
