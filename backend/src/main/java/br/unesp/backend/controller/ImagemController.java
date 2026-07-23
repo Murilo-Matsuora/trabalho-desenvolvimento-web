@@ -32,10 +32,9 @@ public class ImagemController {
 
     @GetMapping(value = "/", produces = "application/json")
     public ResponseEntity<ArrayList<Imagem>> init() {
-        // Create a mock user to assign as the author
+
         Usuario mockUser = new Usuario("Pinnotes", "pinnotes", "pinnotes@gmail.com", "senha123", UserRole.USER);
-        
-        // Updated mock data to include the 'autor' as the 7th parameter
+    
         Imagem i1 = new Imagem(0.0, 0.0, 200.0, 200.0, "https://i.pinimg.com/736x/db/0b/89/db0b89cd34a97c70fcb6e3b1d54d2be3.jpg", "chiikawa", mockUser);
         Imagem i2 = new Imagem(50.0, 30.0, 80.0, 80.0, "https://i.pinimg.com/736x/e9/a7/31/e9a7319b80005992aa8221bd229e969b.jpg", "my melody", mockUser);
         
