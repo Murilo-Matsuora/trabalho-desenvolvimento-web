@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,15 +21,20 @@ import br.unesp.backend.model.Usuario;
 import br.unesp.backend.repository.UsuarioRepository;
 
 @RestController
-@RequestMapping("/usuario")
+@RequestMapping("/api/users")
+@CrossOrigin
 public class UsuarioController {
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    // Injecao de dependencias recomendada via construtor
+    public UsuarioController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+        this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
+    // Retorna os dados do usuario atualmente autenticado
     @GetMapping(value = "/me", produces = "application/json")
     public ResponseEntity<Usuario> me(@AuthenticationPrincipal Usuario usuarioLogado) {
         if (usuarioLogado == null) {
@@ -38,9 +43,7 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioLogado);
     }
 
-    //PUT /usuario/me
-    // Atualiza o perfil do usuário logado mantendo a integridade dos dados e da senha.
-     
+    // Atualiza o perfil do usuario logado mantendo a integridade dos dados e da senha
     @PutMapping(value = "/me", produces = "application/json")
     public ResponseEntity<Usuario> atualizarPerfil(
             @RequestBody Usuario dados,
@@ -50,7 +53,7 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // Busca o usuário gerenciado diretamente do banco para evitar conflitos de JPA
+        // Busca o usuario gerenciado diretamente do banco para evitar conflitos de JPA
         Usuario usuarioBD = usuarioRepository.findById(usuarioLogado.getId()).orElse(null);
         if (usuarioBD == null) {
             return ResponseEntity.notFound().build();
@@ -76,6 +79,7 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioAtualizado);
     }
 
+    // Deleta a conta do usuario atualmente autenticado
     @DeleteMapping(value = "/me")
     public ResponseEntity<Void> deletarMinhaConta(@AuthenticationPrincipal Usuario usuarioLogado) {
         if (usuarioLogado == null) {
@@ -90,8 +94,8 @@ public class UsuarioController {
         return ResponseEntity.noContent().build();
     }
 
- 
-    @GetMapping(value = "/all", produces = "application/json")
+    // Retorna a colecao completa de usuarios seguindo a convencao REST GET /api/users
+    @GetMapping(produces = "application/json")
     public ResponseEntity<List<Usuario>> listarTodos() {
         List<Usuario> usuarios = StreamSupport
                 .stream(usuarioRepository.findAll().spliterator(), false)
@@ -103,7 +107,7 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarios);
     }
 
-
+    // Busca um usuario especifico pelo seu ID
     @GetMapping(value = "/{id}", produces = "application/json")
     public ResponseEntity<Usuario> buscarPorId(@PathVariable("id") Long id) {
         if (id == null || id <= 0) {

@@ -1,77 +1,77 @@
 package br.unesp.backend.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import br.unesp.backend.model.AuthenticationDTO;
 import br.unesp.backend.model.LoginResponseDTO;
-// import br.unesp.backend.model.Pessoa;
 import br.unesp.backend.model.RegisterDTO;
 import br.unesp.backend.model.Usuario;
 import br.unesp.backend.repository.UsuarioRepository;
 import br.unesp.backend.security.TokenService;
 import jakarta.validation.Valid;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("auth")
+@RequestMapping("/auth")
 @CrossOrigin
 public class AuthenticationController {
 
     @Autowired
     private AuthenticationManager authenticationManager;
+
     @Autowired
     private UsuarioRepository usuarioRepository;
+
     @Autowired
     private TokenService tokenService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid AuthenticationDTO data){
-     
-        // É uma boa prática armazenarmos as senhas do usuário como HASH no banco de dados. 
-        // Dessa maneira, caso haja um vazamento do BD, as senhas estarão criptografadas
-        // e não poderão ser diretamente acessadas. 
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid AuthenticationDTO data) {
         var usernamePassword = new UsernamePasswordAuthenticationToken(data.email(), data.senha());
 
-        try{
+        try {
             var auth = this.authenticationManager.authenticate(usernamePassword);
-            var token = tokenService.generateToken((Usuario)auth.getPrincipal());
+            var token = tokenService.generateToken((Usuario) auth.getPrincipal());
 
             return ResponseEntity.ok(new LoginResponseDTO(token));
-        }catch(Exception e){
-            System.out.println("Erro:  ");
-            System.out.println(e);
-            return ResponseEntity.internalServerError().build();
+        } catch (BadCredentialsException e) {
+            // erro por parametros
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (Exception e) {
+            // erros 
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody @Valid RegisterDTO data){
-        // Primeiro verifica se já não existe outro usuário cadastrado com o mesmo email
-        if(this.usuarioRepository.findByLogin(data.email()) != null) return ResponseEntity.badRequest().build();
+    public ResponseEntity<Void> register(@RequestBody @Valid RegisterDTO data) {
+   
+        if (this.usuarioRepository.findByLogin(data.email()) != null) {
+            return ResponseEntity.badRequest().build();
+        }
 
-        // Caso não exista, vamos encriptar a senha para salvar no BD. A senha bruta do usuário 
-        // NÃO DEVE SER INSERIDA NO BD POR MEDIDAS DE SEGURANÇA.
 
+        String encryptedPassword = passwordEncoder.encode(data.senha());
 
-        String encryptedPassword = new BCryptPasswordEncoder().encode(data.senha());
-        System.out.println(data.email());
-        System.out.println(encryptedPassword);
-        System.out.println(data.role());
-
-        // Pessoa newUser = new Pessoa(data.email(), encryptedPassword, data.role(), "teste", "teste");
-        Usuario newUser = new Usuario(data.email(), encryptedPassword, data.role());
+  
+        Usuario newUser = new Usuario(
+            data.nome(),
+            data.username(),
+            data.email(),
+            encryptedPassword,
+            data.role()
+        );
 
         this.usuarioRepository.save(newUser);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }
