@@ -37,7 +37,7 @@ public class WhiteboardController {
         if (usuarioLogado == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.ok(repository.findByUsuario(usuarioLogado));
+        return ResponseEntity.ok(repository.findByUsuarioIdOrPublicaTrue(usuarioLogado.getId()));
     }
 
     @GetMapping("/{id}")

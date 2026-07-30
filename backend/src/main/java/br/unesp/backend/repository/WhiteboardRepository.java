@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface WhiteboardRepository extends JpaRepository<Whiteboard, Long> {
     List<Whiteboard> findByUsuario(Usuario usuario);
+    List<Whiteboard> findByUsuarioIdOrPublicaTrue(Long usuarioId);
 }

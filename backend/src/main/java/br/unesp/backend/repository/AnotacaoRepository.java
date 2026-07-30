@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface AnotacaoRepository extends JpaRepository<Anotacao, Long> {
     List<Anotacao> findByUsuario(Usuario usuario);
+
+    List<Anotacao> findByUsuarioIdOrPublicaTrue(Long usuarioId);
 }

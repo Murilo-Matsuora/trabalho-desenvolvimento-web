@@ -9,6 +9,8 @@ import java.util.List;
 
 public interface AnotacaoPastaRepository extends JpaRepository<AnotacaoPasta, Long> {
     List<AnotacaoPasta> findByAnotacao(Anotacao anotacao);
+
+    
     
     @Transactional
     void deleteByAnotacao(Anotacao anotacao);
