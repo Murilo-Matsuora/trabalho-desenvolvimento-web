@@ -1,93 +1,56 @@
 package br.unesp.backend.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
-@Inheritance(strategy = InheritanceType.JOINED)
-public abstract class Anotacao {
+@Table(name = "tb_anotacao")
+public class Anotacao {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private double x;
-    private double y;
-    private double altura;
-    private double largura;
+
+    private String title;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String conteudo;
+
+    @Column(nullable = false)
+    private boolean publica = false;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
 
     @ManyToOne
-    @JoinColumn(name = "whiteboard_id", nullable = false)
-    @JsonIgnore
-    private Whiteboard whiteboard;
+    @JoinColumn(name = "pasta_id")
+    private Pasta pasta;
 
-    public Anotacao(double x, double y, double altura, double largura) {
-        this.x = x;
-        this.y = y;
-        this.altura = altura;
-        this.largura = largura;
+    private LocalDateTime dataAtualizacao;
+
+    @PrePersist
+    @PreUpdate
+    public void preUpdate() {
+        this.dataAtualizacao = LocalDateTime.now();
     }
 
-    public Anotacao() {
-    }
+    public Anotacao() {}
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public double getX() {
-        return x;
-    }
-
-    public void setX(double x) {
-        this.x = x;
-    }
-
-    public double getY() {
-        return y;
-    }
-
-    public void setY(double y) {
-        this.y = y;
-    }
-
-    public double getAltura() {
-        return altura;
-    }
-
-    public void setAltura(double altura) {
-        this.altura = altura;
-    }
-
-    public double getLargura() {
-        return largura;
-    }
-
-    public void setLargura(double largura) {
-        this.largura = largura;
-    }
-
-    public Whiteboard getWhiteboard() {
-        return whiteboard;
-    }
-
-    public void setWhiteboard(Whiteboard whiteboard) {
-        this.whiteboard = whiteboard;
-    }
-
-    
-    
-    
-    
+    // Getters e Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getConteudo() { return conteudo; }
+    public void setConteudo(String conteudo) { this.conteudo = conteudo; }
+    public boolean isPublica() { return publica; }
+    public void setPublica(boolean publica) { this.publica = publica; }
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+    public Pasta getPasta() { return pasta; }
+    public void setPasta(Pasta pasta) { this.pasta = pasta; }
+    public LocalDateTime getDataAtualizacao() { return dataAtualizacao; }
+    public void setDataAtualizacao(LocalDateTime dataAtualizacao) { this.dataAtualizacao = dataAtualizacao; }
 }

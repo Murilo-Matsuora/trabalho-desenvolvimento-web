@@ -34,7 +34,10 @@ public class SecurityFilter extends OncePerRequestFilter {
 
             var email = tokenService.validateToken(token);
             System.out.println(email);
-            UserDetails user = usuarioRepository.findByLogin(email);
+            
+            // ADJUSTED: Changed findByLogin to findByEmail
+            UserDetails user = usuarioRepository.findByEmail(email);
+            
             if (user != null) {
                 System.out.println(user);
                 // Obtém todas as informações usadas pelos restantes dos filtros
@@ -46,7 +49,6 @@ public class SecurityFilter extends OncePerRequestFilter {
         // Caso não encontre token nenhum, não salva nenhum contexto e continua para o próximo filtro
         filterChain.doFilter(request, response);
     }
-
     private String recoverToken(HttpServletRequest request){
         var authHeader = request.getHeader("Authorization");
 

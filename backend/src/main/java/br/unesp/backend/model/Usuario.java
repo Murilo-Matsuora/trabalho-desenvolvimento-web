@@ -159,4 +159,18 @@ public class Usuario implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "autor")
+    private List<Imagem> pinnups = new ArrayList<>();
+
+
+    public List<Imagem> getPinnups() {
+        return pinnups;
+    }
+
+    public void setPinnups(List<Imagem> pinnups) {
+        this.pinnups = pinnups;
+    }
 }

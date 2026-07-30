@@ -16,6 +16,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "tb_pasta")
@@ -52,6 +53,8 @@ public class Pasta {
     @OneToMany(mappedBy = "pasta", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Whiteboard> whiteboards = new ArrayList<>();
+
+    
 
     public Pasta() {
     }
@@ -118,5 +121,22 @@ public class Pasta {
 
     public void setWhiteboards(List<Whiteboard> whiteboards) {
         this.whiteboards = whiteboards;
+    }
+    
+
+    @Transient
+    public String getNomeDono() {
+        if (this.usuario != null) {
+            return this.usuario.getUsername(); 
+        }
+        return "Desconhecido";
+    }
+
+    @Transient
+    public String getDono() {
+        if (this.usuario != null) {
+            return this.usuario.getUsername(); 
+        }
+        return "Desconhecido";
     }
 }

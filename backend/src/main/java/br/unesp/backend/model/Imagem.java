@@ -1,42 +1,64 @@
 package br.unesp.backend.model;
 
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import java.util.ArrayList;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-public class Imagem extends Anotacao {
+@Table(name = "tb_imagem")
+public class Imagem {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String titulo;
     private String url;
-    private String descricao;
     
+    @Column(nullable = false)
+    private boolean publica = true;
+
+    private Integer salvos = 0;
+
     @ManyToOne
     @JoinColumn(name = "usuario_id")
-    private Usuario autor; 
-    
+    private Usuario autor;
+
+    private LocalDateTime dataCriacao;
+
+    private String descricao;
+
+    @ManyToOne
+    @JoinColumn(name = "pasta_id")
+    private Pasta pasta;
+
     @ElementCollection
-    private List<String> tags = new ArrayList<>();
-    
-    public Imagem(double x, double y, double altura, double largura, String url, String descricao, Usuario autor) {
-        super(x, y, altura, largura);
-        this.url = url;
-        this.descricao = descricao;
-        this.autor = autor;
+    private List<String> tags;
+
+    @PrePersist
+    public void prePersist() {
+        this.dataCriacao = LocalDateTime.now();
     }
 
-    public Imagem() {
-    }
+    public Imagem() {}
 
-    public String getUrl() {
-        return url;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setUrl(String url) {
-        this.url = url;
-    }
+    public String getTitulo() { return titulo; }
+    public void setTitulo(String titulo) { this.titulo = titulo; }
+
+    public String getUrl() { return url; }
+    public void setUrl(String url) { this.url = url; }
+
+    public boolean isPublica() { return publica; }
+    public void setPublica(boolean publica) { this.publica = publica; }
+
+    public Integer getSalvos() { return salvos; }
+    public void setSalvos(Integer salvos) { this.salvos = salvos; }
+
+    public Usuario getAutor() { return autor; }
+    public void setAutor(Usuario autor) { this.autor = autor; }
 
     public String getDescricao() {
         return descricao;
@@ -45,13 +67,13 @@ public class Imagem extends Anotacao {
     public void setDescricao(String descricao) {
         this.descricao = descricao;
     }
-    
-    public Usuario getAutor() {
-        return autor;
+
+    public Pasta getPasta() {
+        return pasta;
     }
 
-    public void setAutor(Usuario autor) {
-        this.autor = autor;
+    public void setPasta(Pasta pasta) {
+        this.pasta = pasta;
     }
 
     public List<String> getTags() {
@@ -61,4 +83,7 @@ public class Imagem extends Anotacao {
     public void setTags(List<String> tags) {
         this.tags = tags;
     }
+
+    public LocalDateTime getDataCriacao() { return dataCriacao; }
+    public void setDataCriacao(LocalDateTime dataCriacao) { this.dataCriacao = dataCriacao; }
 }

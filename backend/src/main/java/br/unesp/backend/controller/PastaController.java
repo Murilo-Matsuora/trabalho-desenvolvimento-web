@@ -13,15 +13,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.unesp.backend.model.Pasta;
 import br.unesp.backend.model.Usuario;
+import br.unesp.backend.model.Whiteboard;
 import br.unesp.backend.repository.PastaRepository;
 
 
 @RestController
-@RequestMapping("/api/pasta")
+@RequestMapping("/pasta")
 @CrossOrigin
 public class PastaController {
 
@@ -31,13 +33,26 @@ public class PastaController {
         this.pastaRepository = pastaRepository;
     }
 
-    // Retorna todas as pastas do usuario autenticado e pastas publicas
+    // Retorna as pastas do usuario autenticado e pastas publicas, com opção de filtrar
     @GetMapping(produces = "application/json")
-    public ResponseEntity<List<Pasta>> listarPastas(@AuthenticationPrincipal Usuario usuarioLogado) {
+    public ResponseEntity<List<Pasta>> listarPastas(
+            @RequestParam(required = false, defaultValue = "false") boolean userPasta,
+            @AuthenticationPrincipal Usuario usuarioLogado) {
+        
         if (usuarioLogado == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        List<Pasta> pastas = pastaRepository.findByUsuarioIdOrPublicaTrue(usuarioLogado.getId());
+
+        List<Pasta> pastas;
+        
+        // Se o frontend solicitar apenas as pastas do dono (para o dropdown)
+        if (userPasta) {
+            pastas = pastaRepository.findByUsuarioId(usuarioLogado.getId());
+        } else {
+            // Mantém o comportamento original para outras partes do sistema
+            pastas = pastaRepository.findByUsuarioIdOrPublicaTrue(usuarioLogado.getId());
+        }
+
         if (pastas.isEmpty()) {
             return ResponseEntity.noContent().build();
         }

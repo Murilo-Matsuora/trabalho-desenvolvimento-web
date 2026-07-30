@@ -4,73 +4,58 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "whiteboards")
+@Table(name = "tb_whiteboard")
 public class Whiteboard {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private String title;
 
-    /**
-     * Armazena o JSON completo do quadro contendo elementos, conexões/setas e desenhos.
-     */
     @Column(columnDefinition = "TEXT")
     private String data;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    @Column(nullable = false)
+    private boolean publica = false;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
+
+    @ManyToOne
+    @JoinColumn(name = "pasta_id")
+    private Pasta pasta;
+
+    private LocalDateTime dataAtualizacao;
+
+    @PrePersist
+    @PreUpdate
+    public void preUpdate() {
+        this.dataAtualizacao = LocalDateTime.now();
+    }
 
     public Whiteboard() {}
 
-    public Whiteboard(String title, String data) {
-        this.title = title;
-        this.data = data;
-    }
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
-
     // Getters e Setters
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    public String getTitle() {
-        return title;
-    }
+    public String getData() { return data; }
+    public void setData(String data) { this.data = data; }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public boolean isPublica() { return publica; }
+    public void setPublica(boolean publica) { this.publica = publica; }
 
-    public String getData() {
-        return data;
-    }
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
 
-    public void setData(String data) {
-        this.data = data;
-    }
+    public Pasta getPasta() { return pasta; }
+    public void setPasta(Pasta pasta) { this.pasta = pasta; }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
+    public LocalDateTime getDataAtualizacao() { return dataAtualizacao; }
+    public void setDataAtualizacao(LocalDateTime dataAtualizacao) { this.dataAtualizacao = dataAtualizacao; }
 }

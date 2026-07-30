@@ -13,6 +13,9 @@ public interface PastaRepository extends JpaRepository<Pasta, Long> {
 
     List<Pasta> findByUsuarioIdOrPublicaTrue(Long usuarioId);
 
+    // Retorna todas as pastas de um usuário específico
+    List<Pasta> findByUsuarioId(Long usuarioId);
+
     // Retorna apenas subpastas diretas de uma pasta principal
     List<Pasta> findByPastaPaiId(Long pastaPaiId);
 

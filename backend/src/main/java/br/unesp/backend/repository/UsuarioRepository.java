@@ -1,11 +1,13 @@
 package br.unesp.backend.repository;
 
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
-
 import br.unesp.backend.model.Usuario;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Repository;
 
-public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
-    @Query("select u from Usuario u where u.email = ?1")
-	Usuario findByLogin(String email);
+@Repository
+public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
+    UserDetails findByEmail(String email);
+    
+    UserDetails findByUsername(String username);
 }

@@ -3,6 +3,7 @@ package br.unesp.backend.controller;
 import br.unesp.backend.model.AuthenticationDTO;
 import br.unesp.backend.model.LoginResponseDTO;
 import br.unesp.backend.model.RegisterDTO;
+import br.unesp.backend.model.UserRole;
 import br.unesp.backend.model.Usuario;
 import br.unesp.backend.repository.UsuarioRepository;
 import br.unesp.backend.security.TokenService;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin
+@CrossOrigin(origins = {"http://localhost:5173", "https://pinnotes-dw.app"})
 public class AuthenticationController {
 
     @Autowired
@@ -51,27 +52,30 @@ public class AuthenticationController {
         }
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody @Valid RegisterDTO data) {
+
+@PostMapping("/register")
+public ResponseEntity<Void> register(@RequestBody @Valid RegisterDTO data) {
+
    
-        if (this.usuarioRepository.findByLogin(data.email()) != null) {
-            return ResponseEntity.badRequest().build();
-        }
-
-
-        String encryptedPassword = passwordEncoder.encode(data.senha());
-
-  
-        Usuario newUser = new Usuario(
-            data.nome(),
-            data.username(),
-            data.email(),
-            encryptedPassword,
-            data.role()
-        );
-
-        this.usuarioRepository.save(newUser);
-
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    if (this.usuarioRepository.findByEmail(data.email()) != null) {
+        return ResponseEntity.badRequest().build();
     }
+
+    String encryptedPassword = passwordEncoder.encode(data.senha());
+    
+
+    UserRole userRole = data.role() != null ? data.role() : UserRole.USER;
+
+    Usuario newUser = new Usuario(
+        data.nome(),
+        data.username(),
+        data.email(),
+        encryptedPassword,
+        userRole
+    );
+
+    this.usuarioRepository.save(newUser);
+
+    return ResponseEntity.status(HttpStatus.CREATED).build();
+}
 }
