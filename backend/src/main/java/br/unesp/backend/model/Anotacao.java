@@ -13,8 +13,7 @@ public class Anotacao {
 
     private String title;
 
-    @Lob
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     private String conteudo;
 
     @Column(nullable = false)
