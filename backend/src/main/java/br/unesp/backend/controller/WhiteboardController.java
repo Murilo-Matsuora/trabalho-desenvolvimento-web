@@ -41,15 +41,22 @@ public class WhiteboardController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> getById(@PathVariable Long id, @AuthenticationPrincipal Usuario usuarioLogado) {
-        return repository.findById(id).map(board -> {
-            Map<String, Object> response = new HashMap<>();
-            response.put("id", board.getId());
-            response.put("title", board.getTitle());
-            response.put("data", board.getData());
-            
-            // Envia a visibilidade para o frontend
-            response.put("publica", board.isPublica());
+public ResponseEntity<Map<String, Object>> getById(@PathVariable Long id, @AuthenticationPrincipal Usuario usuarioLogado) {
+    return repository.findById(id).map(board -> {
+        // Verifica se o whiteboard é público e o usuário NÃO é o dono
+        boolean isOwner = usuarioLogado != null && board.getUsuario().getId().equals(usuarioLogado.getId());
+        
+        // Se não for dono e não for público, nega acesso
+        if (!isOwner && !board.isPublica()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).<Map<String, Object>>build();
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", board.getId());
+        response.put("title", board.getTitle());
+        response.put("data", board.getData());
+        response.put("publica", board.isPublica());
+        response.put("isOwner", isOwner);
             
     
             List<Long> pastaIds = whiteboardPastaRepository.findByWhiteboard(board).stream()

@@ -41,11 +41,19 @@ public class AnotacaoController {
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getById(@PathVariable Long id, @AuthenticationPrincipal Usuario usuarioLogado) {
         return repository.findById(id).map(nota -> {
+            
+            // NOVO: Verifica se o usuário é dono e barra o acesso se for privado
+            boolean isOwner = usuarioLogado != null && nota.getUsuario().getId().equals(usuarioLogado.getId());
+            if (!isOwner && !nota.isPublica()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).<Map<String, Object>>build();
+            }
+
             Map<String, Object> response = new HashMap<>();
             response.put("id", nota.getId());
             response.put("title", nota.getTitle());
             response.put("conteudo", nota.getConteudo());
             response.put("publica", nota.isPublica());
+            response.put("isOwner", isOwner); // NOVO: Flag para o frontend bloquear edição/ferramentas
             
             List<Long> pastaIds = anotacaoPastaRepository.findByAnotacao(nota).stream()
                     .filter(ap -> ap.getPasta() != null)
