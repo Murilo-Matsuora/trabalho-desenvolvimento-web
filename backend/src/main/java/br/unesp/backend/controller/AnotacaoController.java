@@ -35,7 +35,7 @@ public class AnotacaoController {
     @GetMapping
     public ResponseEntity<List<Anotacao>> getAll(@AuthenticationPrincipal Usuario usuarioLogado) {
         if (usuarioLogado == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        return ResponseEntity.ok(repository.findByUsuario(usuarioLogado));
+        return ResponseEntity.ok(repository.findByUsuarioIdOrPublicaTrue(usuarioLogado.getId()));
     }
 
     @GetMapping("/{id}")
